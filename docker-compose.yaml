@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  postgres:
+    build: .
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/posgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  init-db:
+    image: postgres:latest
+    container_name: init-db
+    entrypoint: >
+      /bin/bash -c "
+      echo 'Creating database...'
+      until pg_isready -h postgres -U myuser; do
+      sleep 2;
+      done;
+      psql -h postgres -U myuser -c 'CREATE DATABASE mydb;'
+      echo 'Database created!'
+      "
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: posgresql
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
