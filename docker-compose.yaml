@@ -2,17 +2,18 @@ version: "3.8"
 
 services:
   postgres:
-    build: .
+    image: postgres:latest
     container_name: postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
     volumes:
-      - postgres_data:/var/lib/posgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U myuser"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,18 +23,25 @@ services:
     container_name: init-db
     entrypoint: >
       /bin/bash -c "
-      echo 'Creating database...'
+      export PGPASSWORD=mypassword;
       until pg_isready -h postgres -U myuser; do
-      sleep 2;
+        sleep 2;
       done;
       psql -h postgres -U myuser -c 'CREATE DATABASE mydb;'
-      echo 'Database created!'
       "
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: posgresql
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
     depends_on:
       - postgres
+
+  app:
+    build: ./src
+    container_name: app
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+psycopg2://myuser:mypassword@postgres:5432/mydb
 
 volumes:
   postgres_data:
