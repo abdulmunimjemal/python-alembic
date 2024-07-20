@@ -1,10 +1,12 @@
-FROM python:3.9
+FROM python:3.11-slim-buster
 
 WORKDIR /app
 
-COPY . /app
+COPY . .
 
-RUN pip install -r requirements.txt
+RUN pip install -r src/requirements.txt
 
-# Run the app.py script
-CMD ["python", "app.py"]
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
+
